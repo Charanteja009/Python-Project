@@ -25,6 +25,8 @@ class Game2048:
         self.grid = [[0] * self.size for _ in range(self.size)]
         self.add_new_tile()
         self.add_new_tile()
+        self.score = 0
+        self.history = []
 
     def add_new_tile(self):
         empty_cells = [(r, c) for r in range(self.size) for c in range(self.size) if self.grid[r][c] == 0]
@@ -41,10 +43,12 @@ class Game2048:
         for i in range(len(row) - 1):
             if row[i] == row[i + 1] and row[i] != 0:
                 row[i] *= 2
+                self.score += row[i]
                 row[i + 1] = 0
         return row
 
     def move_left(self):
+        self.save_state()
         for r in range(self.size):
             self.grid[r] = self.compress(self.grid[r])
             self.grid[r] = self.merge(self.grid[r])
@@ -52,6 +56,7 @@ class Game2048:
         self.add_new_tile()
 
     def move_right(self):
+        self.save_state()
         for r in range(self.size):
             self.grid[r] = self.compress(self.grid[r][::-1])
             self.grid[r] = self.merge(self.grid[r])
@@ -60,6 +65,7 @@ class Game2048:
         self.add_new_tile()
 
     def move_up(self):
+        self.save_state()
         for c in range(self.size):
             col = [self.grid[r][c] for r in range(self.size)]
             col = self.compress(col)
@@ -70,6 +76,7 @@ class Game2048:
         self.add_new_tile()
 
     def move_down(self):
+        self.save_state()
         for c in range(self.size):
             col = [self.grid[r][c] for r in range(self.size)]
             col = self.compress(col[::-1])
@@ -78,6 +85,15 @@ class Game2048:
             col.reverse()
             for r in range(self.size):
                 self.grid[r][c] = col[r]
+        self.add_new_tile()
+
+    def save_state(self):
+        # Save the current grid and score before making any move (for undo functionality)
+        self.history.append((self.grid, self.score))
+
+    def undo(self):
+        if self.history:
+            self.grid, self.score = self.history.pop()
         self.add_new_tile()
 
     def game_over(self):
@@ -126,14 +142,27 @@ class Game2048App(tk.Tk):
                 label.grid(row=r, column=c, padx=5, pady=5)
                 row_labels.append(label)
             self.grid_labels.append(row_labels)
+
+        self.score_label = ttk.Label(self.game_frame, text="Score: 0", font=("Arial", 18))
+        self.score_label.grid(row=4, column=0, columnspan=4, pady=10)
+
         self.bind("<Key>", self.key_press)
         self.update_grid()
+
+        # Undo Button
+        self.undo_button = ttk.Button(self.game_frame, text="Undo", command=self.undo_move)
+        self.undo_button.grid(row=5, column=0, columnspan=4, pady=10)
 
         # Game Over Screen
         self.over_frame = ttk.Frame(self.notebook)
         self.notebook.add(self.over_frame, text="Game Over")
         self.over_label = ttk.Label(self.over_frame, text="Game Over!", font=("Arial", 24))
         self.over_label.pack(pady=50)
+        
+        # Add Score to Game Over Screen
+        self.final_score_label = ttk.Label(self.over_frame, text="Final Score: 0", font=("Arial", 18))
+        self.final_score_label.pack(pady=10)
+
         self.restart_button = ttk.Button(self.over_frame, text="Restart", command=self.restart_game)
         self.restart_button.pack()
 
@@ -150,6 +179,9 @@ class Game2048App(tk.Tk):
         self.notebook.hide(self.game_frame)
         self.notebook.add(self.over_frame, text="Game Over")
         self.notebook.select(self.over_frame)
+
+        # Update the score on the Game Over screen
+        self.final_score_label.config(text=f"Final Score: {self.game.score}")
 
     def key_press(self, event):
         if not self.game.game_over():
@@ -173,6 +205,13 @@ class Game2048App(tk.Tk):
                 text = str(num) if num != 0 else ''
                 bg_color, fg_color = TILE_COLORS.get(num, ("#cdc1b4", "#776e65"))
                 self.grid_labels[r][c].config(text=text, bg=bg_color, fg=fg_color)
+        
+        # Update score label
+        self.score_label.config(text=f"Score: {self.game.score}")
+
+    def undo_move(self):
+        self.game.undo()
+        self.update_grid()
 
     def restart_game(self):
         self.game = Game2048()
