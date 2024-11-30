@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import random
 
-# Define color scheme for tiles based on their value
+
 TILE_COLORS = {
     0: ("#cdc1b4", "#776e65"),
     2: ("#eee4da", "#776e65"),
@@ -18,7 +18,7 @@ TILE_COLORS = {
     2048: ("#edc22e", "#f9f6f2")
 }
 
-# Create the game logic for 2048
+
 class Game2048:
     def __init__(self):
         self.size = 4
@@ -88,7 +88,7 @@ class Game2048:
         self.add_new_tile()
 
     def save_state(self):
-        # Save the current grid and score before making any move (for undo functionality)
+
         self.history.append((self.grid, self.score))
 
     def undo(self):
@@ -112,7 +112,7 @@ class Game2048:
         return True
 
 
-# GUI part using tkinter
+
 class Game2048App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -166,7 +166,6 @@ class Game2048App(tk.Tk):
         self.restart_button = ttk.Button(self.over_frame, text="Restart", command=self.restart_game)
         self.restart_button.pack()
 
-        # Hide play and game over tabs initially
         self.notebook.hide(self.game_frame)
         self.notebook.hide(self.over_frame)
 
@@ -180,7 +179,6 @@ class Game2048App(tk.Tk):
         self.notebook.add(self.over_frame, text="Game Over")
         self.notebook.select(self.over_frame)
 
-        # Update the score on the Game Over screen
         self.final_score_label.config(text=f"Final Score: {self.game.score}")
 
     def key_press(self, event):
@@ -205,8 +203,7 @@ class Game2048App(tk.Tk):
                 text = str(num) if num != 0 else ''
                 bg_color, fg_color = TILE_COLORS.get(num, ("#cdc1b4", "#776e65"))
                 self.grid_labels[r][c].config(text=text, bg=bg_color, fg=fg_color)
-        
-        # Update score label
+  
         self.score_label.config(text=f"Score: {self.game.score}")
 
     def undo_move(self):
